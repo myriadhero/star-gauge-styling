@@ -219,7 +219,8 @@
       font-family: var(--title-font);
       font-size: var(--title-size);
       color: var(--title-color);
-      letter-spacing: 0.4em;
+      display: inline-flex;
+      gap: 20px;
       margin-bottom: 40px;
       font-weight: 400;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -429,13 +430,20 @@
       <h2>Highlight Patterns</h2>
       <div class="highlight-section">
         <div class="pattern-picker">
-          <button class="pattern-btn" onclick="addHighlightLayer('center')">Center 心</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('centerSingle')">心</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('center3x3')">3×3</button>
           <button class="pattern-btn" onclick="addHighlightLayer('corners')">Corners</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('innerCorners')">Inner Cor.</button>
           <button class="pattern-btn" onclick="addHighlightLayer('diamond')">Diamond</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('innerDiamond')">Inner Dia.</button>
           <button class="pattern-btn" onclick="addHighlightLayer('cross')">Cross</button>
           <button class="pattern-btn" onclick="addHighlightLayer('border')">Border</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('innerBorder')">Inner Bor.</button>
           <button class="pattern-btn" onclick="addHighlightLayer('diagonal')">Diagonals</button>
           <button class="pattern-btn" onclick="addHighlightLayer('quadrants')">Quadrants</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('sideRects')">Sides</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('topBottom')">Top/Bot</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('leftRight')">Left/Right</button>
         </div>
         <div class="highlight-layers" id="highlightLayers">
           <div class="no-layers">Click patterns above to add highlight layers</div>
@@ -544,7 +552,7 @@
         <button class="zoom-btn" onclick="resetZoom()">⟲</button>
       </div>
       <div class="poster" id="poster">
-        <h1 class="poster-title">璇 璣 圖</h1>
+        <h1 class="poster-title"><span>璇</span><span>璣</span><span>圖</span></h1>
         <div class="poem-grid" id="poemGrid"></div>
         <div class="poster-info">
           <div class="info-chinese">蘇蕙 · 蘇若蘭 · 前秦 · 四世紀</div>
@@ -595,32 +603,54 @@
 
     // Pattern display names
     const patternNames = {
-      center: 'Center 心',
-      corners: 'Corners',
-      diamond: 'Diamond',
+      centerSingle: 'Center 心',
+      center3x3: 'Center 3×3',
+      corners: 'Corners 7×7',
+      innerCorners: 'Inner Corners',
+      diamond: 'Diamond Ring',
+      innerDiamond: 'Inner Diamond',
       cross: 'Cross',
       border: 'Border',
+      innerBorder: 'Inner Border',
       diagonal: 'Diagonals',
-      quadrants: 'Quadrants'
+      quadrants: 'Quadrants',
+      sideRects: 'Side Rectangles',
+      topBottom: 'Top/Bottom',
+      leftRight: 'Left/Right'
     };
 
     // Default colors for each pattern
     const defaultPatternColors = {
-      center: '#ff6b6b',
+      centerSingle: '#ff6b6b',
+      center3x3: '#ff8a80',
       corners: '#4ecdc4',
+      innerCorners: '#26a69a',
       diamond: '#ffe66d',
+      innerDiamond: '#ffd54f',
       cross: '#95e1d3',
       border: '#dda0dd',
+      innerBorder: '#ce93d8',
       diagonal: '#98d8c8',
-      quadrants: '#f7dc6f'
+      quadrants: '#f7dc6f',
+      sideRects: '#81d4fa',
+      topBottom: '#a5d6a7',
+      leftRight: '#ffcc80'
     };
 
     // Highlight pattern definitions
     const highlightPatterns = {
-      center: (row, col) => {
+      // Single center character (心)
+      centerSingle: (row, col) => {
+        return row === 14 && col === 14;
+      },
+
+      // Center 3x3 block
+      center3x3: (row, col) => {
         const centerRow = 14, centerCol = 14;
         return Math.abs(row - centerRow) <= 1 && Math.abs(col - centerCol) <= 1;
       },
+
+      // Four corner 7x7 blocks
       corners: (row, col) => {
         const size = 7;
         return (row < size && col < size) ||
@@ -628,20 +658,53 @@
                (row >= 29 - size && col < size) ||
                (row >= 29 - size && col >= 29 - size);
       },
+
+      // Inner corner 5x5 blocks (inside the main corners)
+      innerCorners: (row, col) => {
+        const inBlock = (r, c, startR, startC, size) =>
+          r >= startR && r < startR + size && c >= startC && c < startC + size;
+        return inBlock(row, col, 1, 1, 5) ||
+               inBlock(row, col, 1, 23, 5) ||
+               inBlock(row, col, 23, 1, 5) ||
+               inBlock(row, col, 23, 23, 5);
+      },
+
+      // Diamond ring around center
       diamond: (row, col) => {
         const center = 14;
         const dist = Math.abs(row - center) + Math.abs(col - center);
         return dist <= 7 && dist >= 5;
       },
+
+      // Inner diamond (smaller)
+      innerDiamond: (row, col) => {
+        const center = 14;
+        const dist = Math.abs(row - center) + Math.abs(col - center);
+        return dist <= 4 && dist >= 2;
+      },
+
+      // Cross pattern through center
       cross: (row, col) => {
         return row === 14 || col === 14;
       },
+
+      // Outer border
       border: (row, col) => {
         return row === 0 || row === 28 || col === 0 || col === 28;
       },
+
+      // Inner border (second ring)
+      innerBorder: (row, col) => {
+        return (row === 1 || row === 27) && col >= 1 && col <= 27 ||
+               (col === 1 || col === 27) && row >= 1 && row <= 27;
+      },
+
+      // Both diagonals
       diagonal: (row, col) => {
         return row === col || row === 28 - col;
       },
+
+      // Four quadrant blocks
       quadrants: (row, col) => {
         const inBlock = (r, c, startR, startC, size) =>
           r >= startR && r < startR + size && c >= startC && c < startC + size;
@@ -649,6 +712,31 @@
                inBlock(row, col, 4, 20, 5) ||
                inBlock(row, col, 20, 4, 5) ||
                inBlock(row, col, 20, 20, 5);
+      },
+
+      // Side rectangles (between corners)
+      sideRects: (row, col) => {
+        // Top strip between corners
+        const topStrip = row >= 0 && row < 7 && col >= 7 && col < 22;
+        // Bottom strip between corners
+        const bottomStrip = row >= 22 && row < 29 && col >= 7 && col < 22;
+        // Left strip between corners
+        const leftStrip = col >= 0 && col < 7 && row >= 7 && row < 22;
+        // Right strip between corners
+        const rightStrip = col >= 22 && col < 29 && row >= 7 && row < 22;
+        return topStrip || bottomStrip || leftStrip || rightStrip;
+      },
+
+      // Top and bottom strips only
+      topBottom: (row, col) => {
+        return (row >= 0 && row < 7 && col >= 7 && col < 22) ||
+               (row >= 22 && row < 29 && col >= 7 && col < 22);
+      },
+
+      // Left and right strips only
+      leftRight: (row, col) => {
+        return (col >= 0 && col < 7 && row >= 7 && row < 22) ||
+               (col >= 22 && col < 29 && row >= 7 && row < 22);
       }
     };
 
@@ -1067,7 +1155,7 @@
 
   <rect width="100%" height="100%" fill="url(#bgGradient)"/>
 
-  <text x="${width/2}" y="${titleY}" text-anchor="middle" class="title">璇 璣 圖</text>
+  <text x="${width/2}" y="${titleY}" text-anchor="middle" class="title"><tspan>璇</tspan><tspan dx="20">璣</tspan><tspan dx="20">圖</tspan></text>
 
   <g transform="translate(${padding}, ${gridY})">`;
 
