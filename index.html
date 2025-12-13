@@ -18,9 +18,11 @@
       /* Colors - Elegant gold/cream palette */
       --bg-color-start: #1a1814;
       --bg-color-end: #252220;
-      --text-primary: #d4af37;
+      --title-color: #d4af37;
+      --text-primary: #e8d48b;
       --text-secondary: #b8956e;
       --text-muted: #8a7355;
+      --highlight-color: #c9a227;
       --grid-gap: 2px;
 
       /* Sizing */
@@ -45,7 +47,7 @@
 
     /* Control Panel */
     .controls {
-      width: 320px;
+      width: 340px;
       background: #252525;
       padding: 24px;
       overflow-y: auto;
@@ -122,6 +124,12 @@
       text-align: right;
     }
 
+    .color-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
     .btn {
       width: 100%;
       padding: 12px;
@@ -157,7 +165,7 @@
     /* Preview Area */
     .preview-area {
       flex: 1;
-      margin-left: 320px;
+      margin-left: 340px;
       padding: 40px;
       display: flex;
       justify-content: center;
@@ -207,7 +215,7 @@
     .poster-title {
       font-family: var(--title-font);
       font-size: var(--title-size);
-      color: var(--text-primary);
+      color: var(--title-color);
       letter-spacing: 0.4em;
       margin-bottom: 40px;
       font-weight: 400;
@@ -230,7 +238,15 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: color 0.2s;
+      transition: color 0.2s, opacity 0.2s;
+    }
+
+    .poem-char.highlighted {
+      color: var(--highlight-color);
+    }
+
+    .poem-char.dimmed {
+      opacity: 0.3;
     }
 
     .poster-info {
@@ -282,8 +298,43 @@
       color: #d4af37;
     }
 
-    /* Font loading indicator */
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500&display=swap');
+    .preset-btn.active {
+      border-color: #d4af37;
+      background: #3a3a3a;
+      color: #d4af37;
+    }
+
+    /* Highlight pattern buttons */
+    .highlight-patterns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pattern-btn {
+      padding: 6px 10px;
+      font-size: 11px;
+      border: 1px solid #444;
+      background: #2a2a2a;
+      color: #888;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pattern-btn:hover {
+      border-color: #666;
+      color: #aaa;
+    }
+
+    .pattern-btn.active {
+      border-color: var(--highlight-color, #c9a227);
+      background: rgba(201, 162, 39, 0.15);
+      color: #e8d48b;
+    }
+
+    /* Font loading */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=ZCOOL+QingKe+HuangYou&family=Liu+Jian+Mao+Cao&family=Long+Cang&display=swap');
   </style>
 </head>
 <body>
@@ -294,43 +345,95 @@
     <div class="control-section">
       <h2>Presets</h2>
       <div class="presets">
-        <button class="preset-btn" onclick="applyPreset('gold')">Classic Gold</button>
+        <button class="preset-btn active" onclick="applyPreset('gold')">Classic Gold</button>
         <button class="preset-btn" onclick="applyPreset('ink')">Ink & Paper</button>
         <button class="preset-btn" onclick="applyPreset('night')">Night Sky</button>
         <button class="preset-btn" onclick="applyPreset('minimal')">Minimal</button>
+        <button class="preset-btn" onclick="applyPreset('vermillion')">Vermillion</button>
+        <button class="preset-btn" onclick="applyPreset('jade')">Jade</button>
+      </div>
+    </div>
+
+    <div class="control-section">
+      <h2>Highlight Patterns</h2>
+      <div class="highlight-patterns">
+        <button class="pattern-btn active" onclick="setHighlight('none')">None</button>
+        <button class="pattern-btn" onclick="setHighlight('center')">Center 心</button>
+        <button class="pattern-btn" onclick="setHighlight('corners')">Corners</button>
+        <button class="pattern-btn" onclick="setHighlight('diamond')">Diamond</button>
+        <button class="pattern-btn" onclick="setHighlight('cross')">Cross</button>
+        <button class="pattern-btn" onclick="setHighlight('border')">Border</button>
+        <button class="pattern-btn" onclick="setHighlight('diagonal')">Diagonals</button>
+        <button class="pattern-btn" onclick="setHighlight('quadrants')">Quadrants</button>
+      </div>
+      <div class="control-group" style="margin-top: 12px;">
+        <label>Highlight Color</label>
+        <input type="color" id="highlightColor" value="#c9a227" onchange="updateStyle('--highlight-color', this.value)">
       </div>
     </div>
 
     <div class="control-section">
       <h2>Background</h2>
-      <div class="control-group">
-        <label>Background Start</label>
-        <input type="color" id="bgStart" value="#1a1814" onchange="updateStyle('--bg-color-start', this.value)">
-      </div>
-      <div class="control-group">
-        <label>Background End</label>
-        <input type="color" id="bgEnd" value="#252220" onchange="updateStyle('--bg-color-end', this.value)">
+      <div class="color-row">
+        <div class="control-group">
+          <label>Start</label>
+          <input type="color" id="bgStart" value="#1a1814" onchange="updateStyle('--bg-color-start', this.value)">
+        </div>
+        <div class="control-group">
+          <label>End</label>
+          <input type="color" id="bgEnd" value="#252220" onchange="updateStyle('--bg-color-end', this.value)">
+        </div>
       </div>
     </div>
 
     <div class="control-section">
       <h2>Colors</h2>
-      <div class="control-group">
-        <label>Primary Text (Title & Poem)</label>
-        <input type="color" id="textPrimary" value="#d4af37" onchange="updateStyle('--text-primary', this.value)">
+      <div class="color-row">
+        <div class="control-group">
+          <label>Title</label>
+          <input type="color" id="titleColor" value="#d4af37" onchange="updateStyle('--title-color', this.value)">
+        </div>
+        <div class="control-group">
+          <label>Poem Text</label>
+          <input type="color" id="textPrimary" value="#e8d48b" onchange="updateStyle('--text-primary', this.value)">
+        </div>
       </div>
-      <div class="control-group">
-        <label>Secondary Text</label>
-        <input type="color" id="textSecondary" value="#b8956e" onchange="updateStyle('--text-secondary', this.value)">
-      </div>
-      <div class="control-group">
-        <label>Muted Text</label>
-        <input type="color" id="textMuted" value="#8a7355" onchange="updateStyle('--text-muted', this.value)">
+      <div class="color-row">
+        <div class="control-group">
+          <label>Info Text</label>
+          <input type="color" id="textSecondary" value="#b8956e" onchange="updateStyle('--text-secondary', this.value)">
+        </div>
+        <div class="control-group">
+          <label>Muted Text</label>
+          <input type="color" id="textMuted" value="#8a7355" onchange="updateStyle('--text-muted', this.value)">
+        </div>
       </div>
     </div>
 
     <div class="control-section">
       <h2>Typography</h2>
+      <div class="control-group">
+        <label>Title Font</label>
+        <select id="titleFont" onchange="updateFont('title', this.value)">
+          <option value="'Noto Serif SC', serif">Noto Serif (宋体)</option>
+          <option value="'ZCOOL XiaoWei', serif">ZCOOL XiaoWei (小薇)</option>
+          <option value="'Ma Shan Zheng', cursive">Ma Shan Zheng (马山正)</option>
+          <option value="'Liu Jian Mao Cao', cursive">Liu Jian Mao Cao (刘建毛草)</option>
+          <option value="'Long Cang', cursive">Long Cang (龙藏)</option>
+          <option value="'ZCOOL QingKe HuangYou', cursive">QingKe HuangYou (青壳黄油)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Poem Font</label>
+        <select id="poemFont" onchange="updateFont('poem', this.value)">
+          <option value="'Noto Serif SC', serif">Noto Serif (宋体)</option>
+          <option value="'ZCOOL XiaoWei', serif">ZCOOL XiaoWei (小薇)</option>
+          <option value="'Ma Shan Zheng', cursive">Ma Shan Zheng (马山正)</option>
+          <option value="'Liu Jian Mao Cao', cursive">Liu Jian Mao Cao (刘建毛草)</option>
+          <option value="'Long Cang', cursive">Long Cang (龙藏)</option>
+          <option value="'ZCOOL QingKe HuangYou', cursive">QingKe HuangYou (青壳黄油)</option>
+        </select>
+      </div>
       <div class="control-group">
         <label>Character Size: <span id="charSizeValue">18px</span></label>
         <input type="range" id="charSize" min="12" max="28" value="18" onchange="updateCharSize(this.value)">
@@ -408,6 +511,61 @@
 親剛柔有女為賤人房幽處己憫微身長路悲曠感生民梁山殊塞隔河津`.replace(/\n/g, '');
 
     let currentZoom = 1;
+    let currentHighlight = 'none';
+
+    // Highlight pattern definitions
+    // Each pattern is a function that takes (row, col) and returns true if highlighted
+    const highlightPatterns = {
+      none: () => false,
+
+      // Center character "心" at position (14, 14) and surrounding
+      center: (row, col) => {
+        const centerRow = 14, centerCol = 14;
+        return Math.abs(row - centerRow) <= 1 && Math.abs(col - centerCol) <= 1;
+      },
+
+      // Four corners (7x7 blocks)
+      corners: (row, col) => {
+        const size = 7;
+        return (row < size && col < size) ||
+               (row < size && col >= 29 - size) ||
+               (row >= 29 - size && col < size) ||
+               (row >= 29 - size && col >= 29 - size);
+      },
+
+      // Diamond shape in center
+      diamond: (row, col) => {
+        const center = 14;
+        const dist = Math.abs(row - center) + Math.abs(col - center);
+        return dist <= 7 && dist >= 5;
+      },
+
+      // Cross pattern through center
+      cross: (row, col) => {
+        return row === 14 || col === 14;
+      },
+
+      // Border of the grid
+      border: (row, col) => {
+        return row === 0 || row === 28 || col === 0 || col === 28;
+      },
+
+      // Both diagonals
+      diagonal: (row, col) => {
+        return row === col || row === 28 - col;
+      },
+
+      // Four quadrant blocks (inner squares)
+      quadrants: (row, col) => {
+        // Inner 5x5 blocks at corners of center region
+        const inBlock = (r, c, startR, startC, size) =>
+          r >= startR && r < startR + size && c >= startC && c < startC + size;
+        return inBlock(row, col, 4, 4, 5) ||
+               inBlock(row, col, 4, 20, 5) ||
+               inBlock(row, col, 20, 4, 5) ||
+               inBlock(row, col, 20, 20, 5);
+      }
+    };
 
     // Initialize the grid
     function initGrid() {
@@ -418,13 +576,52 @@
         const span = document.createElement('span');
         span.className = 'poem-char';
         span.textContent = poem[i];
+        span.dataset.row = Math.floor(i / 29);
+        span.dataset.col = i % 29;
         grid.appendChild(span);
       }
+    }
+
+    // Set highlight pattern
+    function setHighlight(pattern) {
+      currentHighlight = pattern;
+
+      // Update button states
+      document.querySelectorAll('.pattern-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase().includes(pattern) ||
+            (pattern === 'none' && btn.textContent === 'None') ||
+            (pattern === 'center' && btn.textContent === 'Center 心')) {
+          btn.classList.add('active');
+        }
+      });
+
+      // Update character highlighting
+      const chars = document.querySelectorAll('.poem-char');
+      const patternFn = highlightPatterns[pattern];
+      const hasHighlight = pattern !== 'none';
+
+      chars.forEach(char => {
+        const row = parseInt(char.dataset.row);
+        const col = parseInt(char.dataset.col);
+        const isHighlighted = patternFn(row, col);
+
+        char.classList.toggle('highlighted', isHighlighted);
+        char.classList.toggle('dimmed', hasHighlight && !isHighlighted);
+      });
     }
 
     // Update CSS custom properties
     function updateStyle(property, value) {
       document.documentElement.style.setProperty(property, value);
+    }
+
+    function updateFont(type, value) {
+      if (type === 'title') {
+        updateStyle('--title-font', value);
+      } else {
+        updateStyle('--poem-font', value);
+      }
     }
 
     function updateCharSize(value) {
@@ -463,64 +660,107 @@
       gold: {
         bgStart: '#1a1814',
         bgEnd: '#252220',
-        textPrimary: '#d4af37',
+        titleColor: '#d4af37',
+        textPrimary: '#e8d48b',
         textSecondary: '#b8956e',
-        textMuted: '#8a7355'
+        textMuted: '#8a7355',
+        highlightColor: '#c9a227'
       },
       ink: {
         bgStart: '#f5f2eb',
         bgEnd: '#ebe6db',
+        titleColor: '#1a1a1a',
         textPrimary: '#2c2c2c',
         textSecondary: '#4a4a4a',
-        textMuted: '#6a6a6a'
+        textMuted: '#6a6a6a',
+        highlightColor: '#8b0000'
       },
       night: {
         bgStart: '#0d1117',
         bgEnd: '#161b22',
+        titleColor: '#e6edf3',
         textPrimary: '#c9d1d9',
         textSecondary: '#8b949e',
-        textMuted: '#6e7681'
+        textMuted: '#6e7681',
+        highlightColor: '#58a6ff'
       },
       minimal: {
         bgStart: '#ffffff',
         bgEnd: '#fafafa',
+        titleColor: '#000000',
         textPrimary: '#1a1a1a',
         textSecondary: '#4a4a4a',
-        textMuted: '#8a8a8a'
+        textMuted: '#8a8a8a',
+        highlightColor: '#0066cc'
+      },
+      vermillion: {
+        bgStart: '#1a1410',
+        bgEnd: '#241a14',
+        titleColor: '#c73e1d',
+        textPrimary: '#e07a5f',
+        textSecondary: '#a05a4a',
+        textMuted: '#6d4c41',
+        highlightColor: '#ff6b35'
+      },
+      jade: {
+        bgStart: '#0f1a18',
+        bgEnd: '#142220',
+        titleColor: '#4a9e8c',
+        textPrimary: '#7ec8b8',
+        textSecondary: '#5a9a8a',
+        textMuted: '#3d6b60',
+        highlightColor: '#2dd4bf'
       }
     };
 
     function applyPreset(name) {
       const preset = presets[name];
 
+      // Update button states
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase().replace(/[& ]/g, '') === name.toLowerCase()) {
+          btn.classList.add('active');
+        }
+      });
+
+      // Update color inputs
       document.getElementById('bgStart').value = preset.bgStart;
       document.getElementById('bgEnd').value = preset.bgEnd;
+      document.getElementById('titleColor').value = preset.titleColor;
       document.getElementById('textPrimary').value = preset.textPrimary;
       document.getElementById('textSecondary').value = preset.textSecondary;
       document.getElementById('textMuted').value = preset.textMuted;
+      document.getElementById('highlightColor').value = preset.highlightColor;
 
+      // Apply styles
       updateStyle('--bg-color-start', preset.bgStart);
       updateStyle('--bg-color-end', preset.bgEnd);
+      updateStyle('--title-color', preset.titleColor);
       updateStyle('--text-primary', preset.textPrimary);
       updateStyle('--text-secondary', preset.textSecondary);
       updateStyle('--text-muted', preset.textMuted);
+      updateStyle('--highlight-color', preset.highlightColor);
     }
 
     // Export to SVG
     function exportSVG() {
-      const poster = document.getElementById('poster');
       const styles = getComputedStyle(document.documentElement);
 
       const bgStart = styles.getPropertyValue('--bg-color-start').trim();
       const bgEnd = styles.getPropertyValue('--bg-color-end').trim();
+      const titleColor = styles.getPropertyValue('--title-color').trim();
       const textPrimary = styles.getPropertyValue('--text-primary').trim();
       const textSecondary = styles.getPropertyValue('--text-secondary').trim();
       const textMuted = styles.getPropertyValue('--text-muted').trim();
+      const highlightColor = styles.getPropertyValue('--highlight-color').trim();
       const charSize = parseInt(styles.getPropertyValue('--char-size'));
       const titleSize = parseInt(styles.getPropertyValue('--title-size'));
       const gridGap = parseInt(styles.getPropertyValue('--grid-gap'));
       const padding = parseInt(styles.getPropertyValue('--poster-padding'));
       const infoSize = parseInt(styles.getPropertyValue('--info-size')) || 11;
+      const titleFont = styles.getPropertyValue('--title-font').trim();
+      const poemFont = styles.getPropertyValue('--poem-font').trim();
 
       const cellSize = charSize + 4 + gridGap;
       const gridSize = cellSize * 29 - gridGap;
@@ -530,6 +770,9 @@
       const infoY = gridY + gridSize + 40;
       const height = infoY + 60 + padding;
 
+      const patternFn = highlightPatterns[currentHighlight];
+      const hasHighlight = currentHighlight !== 'none';
+
       let svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
   <defs>
@@ -538,9 +781,11 @@
       <stop offset="100%" style="stop-color:${bgEnd}"/>
     </linearGradient>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500&amp;family=Noto+Sans+SC:wght@300;400&amp;display=swap');
-      .title { font-family: 'Noto Serif SC', serif; font-size: ${titleSize}px; fill: ${textPrimary}; }
-      .char { font-family: 'Noto Serif SC', serif; font-size: ${charSize}px; fill: ${textPrimary}; }
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500&amp;family=Noto+Sans+SC:wght@300;400&amp;family=ZCOOL+XiaoWei&amp;family=Ma+Shan+Zheng&amp;family=Liu+Jian+Mao+Cao&amp;family=Long+Cang&amp;family=ZCOOL+QingKe+HuangYou&amp;display=swap');
+      .title { font-family: ${titleFont}; font-size: ${titleSize}px; fill: ${titleColor}; }
+      .char { font-family: ${poemFont}; font-size: ${charSize}px; fill: ${textPrimary}; }
+      .char-highlight { font-family: ${poemFont}; font-size: ${charSize}px; fill: ${highlightColor}; }
+      .char-dim { font-family: ${poemFont}; font-size: ${charSize}px; fill: ${textPrimary}; opacity: 0.3; }
       .info-zh { font-family: 'Noto Sans SC', sans-serif; font-size: ${infoSize + 2}px; fill: ${textSecondary}; }
       .info-en { font-family: 'Noto Sans SC', sans-serif; font-size: ${infoSize}px; fill: ${textMuted}; }
       .info-stats { font-family: 'Noto Sans SC', sans-serif; font-size: ${infoSize - 1}px; fill: ${textMuted}; opacity: 0.7; }
@@ -559,7 +804,12 @@
           const char = poem[row * 29 + col];
           const x = col * cellSize + cellSize / 2;
           const y = row * cellSize + charSize;
-          svg += `\n    <text x="${x}" y="${y}" text-anchor="middle" class="char">${char}</text>`;
+          const isHighlighted = patternFn(row, col);
+          let charClass = 'char';
+          if (hasHighlight) {
+            charClass = isHighlighted ? 'char-highlight' : 'char-dim';
+          }
+          svg += `\n    <text x="${x}" y="${y}" text-anchor="middle" class="${charClass}">${char}</text>`;
         }
       }
 
@@ -579,7 +829,6 @@
       const poster = document.getElementById('poster');
       const scale = 3; // High resolution
 
-      // Use html2canvas-like approach with SVG foreignObject
       const styles = getComputedStyle(document.documentElement);
       const rect = poster.getBoundingClientRect();
 
@@ -604,11 +853,15 @@
                 :root {
                   --bg-color-start: ${styles.getPropertyValue('--bg-color-start')};
                   --bg-color-end: ${styles.getPropertyValue('--bg-color-end')};
+                  --title-color: ${styles.getPropertyValue('--title-color')};
                   --text-primary: ${styles.getPropertyValue('--text-primary')};
                   --text-secondary: ${styles.getPropertyValue('--text-secondary')};
                   --text-muted: ${styles.getPropertyValue('--text-muted')};
+                  --highlight-color: ${styles.getPropertyValue('--highlight-color')};
                   --char-size: ${styles.getPropertyValue('--char-size')};
                   --title-size: ${styles.getPropertyValue('--title-size')};
+                  --title-font: ${styles.getPropertyValue('--title-font')};
+                  --poem-font: ${styles.getPropertyValue('--poem-font')};
                   --grid-gap: ${styles.getPropertyValue('--grid-gap')};
                   --poster-padding: ${styles.getPropertyValue('--poster-padding')};
                 }
