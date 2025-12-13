@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>璇璣圖 Poster Designer</title>
+  <style>
+    :root {
+      /* Poster dimensions */
+      --poster-width: 600px;
+      --poster-padding: 60px;
+
+      /* Typography */
+      --title-font: "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+      --poem-font: "Noto Serif SC", "Source Han Serif SC", "KaiTi", serif;
+      --info-font: "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", sans-serif;
+
+      /* Colors - Elegant gold/cream palette */
+      --bg-color-start: #1a1814;
+      --bg-color-end: #252220;
+      --text-primary: #d4af37;
+      --text-secondary: #b8956e;
+      --text-muted: #8a7355;
+      --grid-gap: 2px;
+
+      /* Sizing */
+      --char-size: 18px;
+      --title-size: 42px;
+      --info-size: 11px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* Control Panel */
+    .controls {
+      width: 320px;
+      background: #252525;
+      padding: 24px;
+      overflow-y: auto;
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      border-right: 1px solid #333;
+    }
+
+    .controls h1 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .controls .subtitle {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 24px;
+    }
+
+    .control-section {
+      margin-bottom: 24px;
+    }
+
+    .control-section h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #333;
+    }
+
+    .control-group {
+      margin-bottom: 16px;
+    }
+
+    .control-group label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #aaa;
+    }
+
+    .control-group input[type="range"] {
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    .control-group input[type="color"] {
+      width: 100%;
+      height: 36px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .control-group select {
+      width: 100%;
+      padding: 8px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 13px;
+    }
+
+    .control-group .value {
+      font-size: 11px;
+      color: #666;
+      text-align: right;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #d4af37, #b8956e);
+      color: #1a1814;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+
+    .btn-secondary {
+      background: #333;
+      color: #e0e0e0;
+      border: 1px solid #444;
+    }
+
+    .btn-secondary:hover {
+      background: #3a3a3a;
+    }
+
+    /* Preview Area */
+    .preview-area {
+      flex: 1;
+      margin-left: 320px;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      background: #1a1a1a;
+    }
+
+    .preview-container {
+      position: relative;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      display: flex;
+      gap: 8px;
+    }
+
+    .zoom-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #444;
+      background: #252525;
+      color: #e0e0e0;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .zoom-btn:hover {
+      background: #333;
+    }
+
+    /* The Poster */
+    .poster {
+      background: linear-gradient(165deg, var(--bg-color-start), var(--bg-color-end));
+      padding: var(--poster-padding);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+      transform-origin: top center;
+    }
+
+    .poster-title {
+      font-family: var(--title-font);
+      font-size: var(--title-size);
+      color: var(--text-primary);
+      letter-spacing: 0.4em;
+      margin-bottom: 40px;
+      font-weight: 400;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .poem-grid {
+      display: grid;
+      grid-template-columns: repeat(29, 1fr);
+      gap: var(--grid-gap);
+      margin-bottom: 40px;
+    }
+
+    .poem-char {
+      font-family: var(--poem-font);
+      font-size: var(--char-size);
+      color: var(--text-primary);
+      width: calc(var(--char-size) + 4px);
+      height: calc(var(--char-size) + 4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    .poster-info {
+      text-align: center;
+      font-family: var(--info-font);
+    }
+
+    .info-chinese {
+      font-size: calc(var(--info-size) + 2px);
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      letter-spacing: 0.1em;
+    }
+
+    .info-english {
+      font-size: var(--info-size);
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    .info-stats {
+      font-size: calc(var(--info-size) - 1px);
+      color: var(--text-muted);
+      opacity: 0.7;
+      letter-spacing: 0.02em;
+    }
+
+    /* Preset buttons */
+    .presets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .preset-btn {
+      padding: 8px;
+      font-size: 11px;
+      border: 1px solid #444;
+      background: #2a2a2a;
+      color: #aaa;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .preset-btn:hover {
+      border-color: #d4af37;
+      color: #d4af37;
+    }
+
+    /* Font loading indicator */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500&display=swap');
+  </style>
+</head>
+<body>
+  <aside class="controls">
+    <h1>璇璣圖 Poster Designer</h1>
+    <p class="subtitle">Style and export your poster</p>
+
+    <div class="control-section">
+      <h2>Presets</h2>
+      <div class="presets">
+        <button class="preset-btn" onclick="applyPreset('gold')">Classic Gold</button>
+        <button class="preset-btn" onclick="applyPreset('ink')">Ink & Paper</button>
+        <button class="preset-btn" onclick="applyPreset('night')">Night Sky</button>
+        <button class="preset-btn" onclick="applyPreset('minimal')">Minimal</button>
+      </div>
+    </div>
+
+    <div class="control-section">
+      <h2>Background</h2>
+      <div class="control-group">
+        <label>Background Start</label>
+        <input type="color" id="bgStart" value="#1a1814" onchange="updateStyle('--bg-color-start', this.value)">
+      </div>
+      <div class="control-group">
+        <label>Background End</label>
+        <input type="color" id="bgEnd" value="#252220" onchange="updateStyle('--bg-color-end', this.value)">
+      </div>
+    </div>
+
+    <div class="control-section">
+      <h2>Colors</h2>
+      <div class="control-group">
+        <label>Primary Text (Title & Poem)</label>
+        <input type="color" id="textPrimary" value="#d4af37" onchange="updateStyle('--text-primary', this.value)">
+      </div>
+      <div class="control-group">
+        <label>Secondary Text</label>
+        <input type="color" id="textSecondary" value="#b8956e" onchange="updateStyle('--text-secondary', this.value)">
+      </div>
+      <div class="control-group">
+        <label>Muted Text</label>
+        <input type="color" id="textMuted" value="#8a7355" onchange="updateStyle('--text-muted', this.value)">
+      </div>
+    </div>
+
+    <div class="control-section">
+      <h2>Typography</h2>
+      <div class="control-group">
+        <label>Character Size: <span id="charSizeValue">18px</span></label>
+        <input type="range" id="charSize" min="12" max="28" value="18" onchange="updateCharSize(this.value)">
+      </div>
+      <div class="control-group">
+        <label>Title Size: <span id="titleSizeValue">42px</span></label>
+        <input type="range" id="titleSize" min="28" max="72" value="42" onchange="updateTitleSize(this.value)">
+      </div>
+      <div class="control-group">
+        <label>Grid Gap: <span id="gridGapValue">2px</span></label>
+        <input type="range" id="gridGap" min="0" max="8" value="2" onchange="updateGridGap(this.value)">
+      </div>
+      <div class="control-group">
+        <label>Padding: <span id="paddingValue">60px</span></label>
+        <input type="range" id="padding" min="30" max="120" value="60" onchange="updatePadding(this.value)">
+      </div>
+    </div>
+
+    <div class="control-section">
+      <h2>Export</h2>
+      <button class="btn btn-primary" onclick="exportSVG()">Download SVG</button>
+      <button class="btn btn-secondary" onclick="exportPNG()">Download PNG</button>
+    </div>
+  </aside>
+
+  <main class="preview-area">
+    <div class="preview-container">
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoom(-0.1)">−</button>
+        <button class="zoom-btn" onclick="zoom(0.1)">+</button>
+        <button class="zoom-btn" onclick="resetZoom()">⟲</button>
+      </div>
+      <div class="poster" id="poster">
+        <h1 class="poster-title">璇 璣 圖</h1>
+        <div class="poem-grid" id="poemGrid"></div>
+        <div class="poster-info">
+          <div class="info-chinese">蘇蕙 · 蘇若蘭 · 前秦 · 四世紀</div>
+          <div class="info-english">Su Hui (Su Ruolan) · Former Qin Dynasty · 4th Century CE</div>
+          <div class="info-stats">841 characters · ~7,958 poems · Read in any direction</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // The poem grid (29x29 = 841 characters)
+    const poem = `琴清流楚激弦商秦曲發聲悲摧藏音和詠思惟空堂心憂增慕懷慘傷仁
+芳廊東步階西遊王姿淑窕窈伯邵南周風興自后妃荒經離所懷歎嗟智
+蘭休桃林陰翳桑懷歸思廣河女衛鄭楚樊厲節中闈淫遐曠路傷中情懷
+凋翔飛燕巢雙鳩土迤逶路遐志詠歌長歎不能奮飛妄清幃房君無家德
+茂流泉情水激揚眷頎其人碩興齊商雙發歌我袞衣想華飾容朗鏡明聖
+熙長君思悲好仇舊蕤葳粲翠榮曜流華觀冶容為誰感英曜珠光紛葩虞
+陽愁歎發容摧傷鄉悲情我感傷情徵宮羽同聲相追所多思感誰為榮唐
+春方殊離仁君榮身苦惟艱生患多殷憂纏情將如何欽蒼穹誓終篤志貞
+牆禽心濱均深身加懷憂是嬰藻文繁虎龍寧自感思岑形熒城榮明庭妙
+面伯改漢物日我兼思何漫漫榮曜華雕旂孜孜傷情幽未猶傾苟難闈顯
+殊在者之品潤乎愁苦艱是丁麗壯觀飾容側君在時巖在炎在不受亂華
+意誠惑步育浸集悴我生何冤充顏曜繡衣夢想勞形峻慎盛戒義消作重
+感故昵飄施愆殃少章時桑詩端無終始詩仁顏貞寒嵯深興后姬源人榮
+故遺親飄生思愆精徽盛翳風比平始璇情賢喪物歲峨慮漸孽班禍讒章
+新舊聞離天罪辜神恨昭感興作蘇心璣明別改知識深微至嬖女因奸臣
+霜廢遠微地積何遐微業孟鹿麗氏詩圖顯行華終凋淵察大趙婕所佞賢
+冰故離隔德怨因幽元傾宣鳴辭理興義怨士容始松重遠伐氏妤恃凶惟
+齊君殊喬貴其備曠悼思傷懷日往感年衰念是舊愆涯禍用飛辭恣害聖
+潔子我木平根嘗遠歎永感悲思憂遠勞情誰為獨居經在昭燕輦極我配
+志惟同誰均難苦離戚戚情哀慕歲殊歎時賤女懷歎網防青實漢驕忠英
+清新衾陰勻尋辛鳳知我者誰世異浮奇傾鄙賤何如羅萌青生成盈貞皇
+純貞志一專所當麟沙流頹逝異浮沉華英翳曜潛陽林西昭景薄榆桑倫
+望微精感通明神龍馳若然倏逝惟時年殊白日西移光滋愚讒漫頑凶匹
+誰雲浮寄身輕飛昭虧不盈無倏必盛有衰無日不陂流蒙謙退休孝慈離
+思輝光飭粲殊文德離忠體一違心意志殊憤激何施電疑危遠家和雍飄
+想群離散妾孤遺懷儀容仰俯榮華麗飾身將與誰為逝容節敦貞淑思浮
+懷悲哀聲殊乖分聖貲何情憂感惟哀志節上通神祗推持所貞記自恭江
+所春傷應翔雁歸皇辭成者作體下遺葑菲採者無差生從是敬孝為基湘
+親剛柔有女為賤人房幽處己憫微身長路悲曠感生民梁山殊塞隔河津`.replace(/\n/g, '');
+
+    let currentZoom = 1;
+
+    // Initialize the grid
+    function initGrid() {
+      const grid = document.getElementById('poemGrid');
+      grid.innerHTML = '';
+
+      for (let i = 0; i < poem.length; i++) {
+        const span = document.createElement('span');
+        span.className = 'poem-char';
+        span.textContent = poem[i];
+        grid.appendChild(span);
+      }
+    }
+
+    // Update CSS custom properties
+    function updateStyle(property, value) {
+      document.documentElement.style.setProperty(property, value);
+    }
+
+    function updateCharSize(value) {
+      document.getElementById('charSizeValue').textContent = value + 'px';
+      updateStyle('--char-size', value + 'px');
+    }
+
+    function updateTitleSize(value) {
+      document.getElementById('titleSizeValue').textContent = value + 'px';
+      updateStyle('--title-size', value + 'px');
+    }
+
+    function updateGridGap(value) {
+      document.getElementById('gridGapValue').textContent = value + 'px';
+      updateStyle('--grid-gap', value + 'px');
+    }
+
+    function updatePadding(value) {
+      document.getElementById('paddingValue').textContent = value + 'px';
+      updateStyle('--poster-padding', value + 'px');
+    }
+
+    // Zoom controls
+    function zoom(delta) {
+      currentZoom = Math.max(0.3, Math.min(2, currentZoom + delta));
+      document.getElementById('poster').style.transform = `scale(${currentZoom})`;
+    }
+
+    function resetZoom() {
+      currentZoom = 1;
+      document.getElementById('poster').style.transform = 'scale(1)';
+    }
+
+    // Presets
+    const presets = {
+      gold: {
+        bgStart: '#1a1814',
+        bgEnd: '#252220',
+        textPrimary: '#d4af37',
+        textSecondary: '#b8956e',
+        textMuted: '#8a7355'
+      },
+      ink: {
+        bgStart: '#f5f2eb',
+        bgEnd: '#ebe6db',
+        textPrimary: '#2c2c2c',
+        textSecondary: '#4a4a4a',
+        textMuted: '#6a6a6a'
+      },
+      night: {
+        bgStart: '#0d1117',
+        bgEnd: '#161b22',
+        textPrimary: '#c9d1d9',
+        textSecondary: '#8b949e',
+        textMuted: '#6e7681'
+      },
+      minimal: {
+        bgStart: '#ffffff',
+        bgEnd: '#fafafa',
+        textPrimary: '#1a1a1a',
+        textSecondary: '#4a4a4a',
+        textMuted: '#8a8a8a'
+      }
+    };
+
+    function applyPreset(name) {
+      const preset = presets[name];
+
+      document.getElementById('bgStart').value = preset.bgStart;
+      document.getElementById('bgEnd').value = preset.bgEnd;
+      document.getElementById('textPrimary').value = preset.textPrimary;
+      document.getElementById('textSecondary').value = preset.textSecondary;
+      document.getElementById('textMuted').value = preset.textMuted;
+
+      updateStyle('--bg-color-start', preset.bgStart);
+      updateStyle('--bg-color-end', preset.bgEnd);
+      updateStyle('--text-primary', preset.textPrimary);
+      updateStyle('--text-secondary', preset.textSecondary);
+      updateStyle('--text-muted', preset.textMuted);
+    }
+
+    // Export to SVG
+    function exportSVG() {
+      const poster = document.getElementById('poster');
+      const styles = getComputedStyle(document.documentElement);
+
+      const bgStart = styles.getPropertyValue('--bg-color-start').trim();
+      const bgEnd = styles.getPropertyValue('--bg-color-end').trim();
+      const textPrimary = styles.getPropertyValue('--text-primary').trim();
+      const textSecondary = styles.getPropertyValue('--text-secondary').trim();
+      const textMuted = styles.getPropertyValue('--text-muted').trim();
+      const charSize = parseInt(styles.getPropertyValue('--char-size'));
+      const titleSize = parseInt(styles.getPropertyValue('--title-size'));
+      const gridGap = parseInt(styles.getPropertyValue('--grid-gap'));
+      const padding = parseInt(styles.getPropertyValue('--poster-padding'));
+      const infoSize = parseInt(styles.getPropertyValue('--info-size')) || 11;
+
+      const cellSize = charSize + 4 + gridGap;
+      const gridSize = cellSize * 29 - gridGap;
+      const width = gridSize + padding * 2;
+      const titleY = padding + titleSize;
+      const gridY = titleY + 40;
+      const infoY = gridY + gridSize + 40;
+      const height = infoY + 60 + padding;
+
+      let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:${bgStart}"/>
+      <stop offset="100%" style="stop-color:${bgEnd}"/>
+    </linearGradient>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500&amp;family=Noto+Sans+SC:wght@300;400&amp;display=swap');
+      .title { font-family: 'Noto Serif SC', serif; font-size: ${titleSize}px; fill: ${textPrimary}; }
+      .char { font-family: 'Noto Serif SC', serif; font-size: ${charSize}px; fill: ${textPrimary}; }
+      .info-zh { font-family: 'Noto Sans SC', sans-serif; font-size: ${infoSize + 2}px; fill: ${textSecondary}; }
+      .info-en { font-family: 'Noto Sans SC', sans-serif; font-size: ${infoSize}px; fill: ${textMuted}; }
+      .info-stats { font-family: 'Noto Sans SC', sans-serif; font-size: ${infoSize - 1}px; fill: ${textMuted}; opacity: 0.7; }
+    </style>
+  </defs>
+
+  <rect width="100%" height="100%" fill="url(#bgGradient)"/>
+
+  <text x="${width/2}" y="${titleY}" text-anchor="middle" class="title">璇 璣 圖</text>
+
+  <g transform="translate(${padding}, ${gridY})">`;
+
+      // Add poem characters
+      for (let row = 0; row < 29; row++) {
+        for (let col = 0; col < 29; col++) {
+          const char = poem[row * 29 + col];
+          const x = col * cellSize + cellSize / 2;
+          const y = row * cellSize + charSize;
+          svg += `\n    <text x="${x}" y="${y}" text-anchor="middle" class="char">${char}</text>`;
+        }
+      }
+
+      svg += `
+  </g>
+
+  <text x="${width/2}" y="${infoY}" text-anchor="middle" class="info-zh">蘇蕙 · 蘇若蘭 · 前秦 · 四世紀</text>
+  <text x="${width/2}" y="${infoY + 20}" text-anchor="middle" class="info-en">Su Hui (Su Ruolan) · Former Qin Dynasty · 4th Century CE</text>
+  <text x="${width/2}" y="${infoY + 38}" text-anchor="middle" class="info-stats">841 characters · ~7,958 poems · Read in any direction</text>
+</svg>`;
+
+      downloadFile(svg, 'xuanji-tu-poster.svg', 'image/svg+xml');
+    }
+
+    // Export to PNG
+    function exportPNG() {
+      const poster = document.getElementById('poster');
+      const scale = 3; // High resolution
+
+      // Use html2canvas-like approach with SVG foreignObject
+      const styles = getComputedStyle(document.documentElement);
+      const rect = poster.getBoundingClientRect();
+
+      // Create a canvas
+      const canvas = document.createElement('canvas');
+      const width = rect.width * scale;
+      const height = rect.height * scale;
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+
+      // Create an SVG with foreignObject containing the poster HTML
+      const data = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}">
+          <foreignObject width="100%" height="100%">
+            <div xmlns="http://www.w3.org/1999/xhtml">
+              ${poster.outerHTML}
+              <style>
+                ${document.querySelector('style').innerHTML}
+                :root {
+                  --bg-color-start: ${styles.getPropertyValue('--bg-color-start')};
+                  --bg-color-end: ${styles.getPropertyValue('--bg-color-end')};
+                  --text-primary: ${styles.getPropertyValue('--text-primary')};
+                  --text-secondary: ${styles.getPropertyValue('--text-secondary')};
+                  --text-muted: ${styles.getPropertyValue('--text-muted')};
+                  --char-size: ${styles.getPropertyValue('--char-size')};
+                  --title-size: ${styles.getPropertyValue('--title-size')};
+                  --grid-gap: ${styles.getPropertyValue('--grid-gap')};
+                  --poster-padding: ${styles.getPropertyValue('--poster-padding')};
+                }
+                .poster { transform: none !important; }
+              </style>
+            </div>
+          </foreignObject>
+        </svg>`;
+
+      const img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(function(blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'xuanji-tu-poster.png';
+          a.click();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(data);
+    }
+
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Initialize
+    initGrid();
+  </script>
+</body>
+</html>
