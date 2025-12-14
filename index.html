@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>璇璣圖 Poster Designer</title>
+  <!-- Google Fonts - loaded via link tags for reliability -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Liu+Jian+Mao+Cao&family=Long+Cang&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@300;400;500&family=Noto+Serif+SC:wght@400;500;600&family=ZCOOL+QingKe+HuangYou&family=ZCOOL+XiaoWei&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Poster dimensions */
+      --poster-width: 600px;
+      --poster-padding: 60px;
+
+      /* Typography */
+      --title-font: "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+      --poem-font: "Noto Serif SC", "Source Han Serif SC", "KaiTi", serif;
+      --info-font: "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", sans-serif;
+
+      /* Colors - Elegant gold/cream palette */
+      --bg-color-start: #1a1814;
+      --bg-color-end: #252220;
+      --title-color: #d4af37;
+      --text-primary: #e8d48b;
+      --text-secondary: #b8956e;
+      --text-muted: #8a7355;
+      --grid-gap: 2px;
+
+      /* Sizing */
+      --char-size: 18px;
+      --title-size: 42px;
+      --info-size: 11px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* Control Panel */
+    .controls {
+      width: 360px;
+      background: #252525;
+      padding: 24px;
+      overflow-y: auto;
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      border-right: 1px solid #333;
+    }
+
+    .controls h1 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .controls .subtitle {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 24px;
+    }
+
+    .control-section {
+      margin-bottom: 24px;
+    }
+
+    .control-section h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #333;
+    }
+
+    .control-group {
+      margin-bottom: 16px;
+    }
+
+    .control-group label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #aaa;
+    }
+
+    .control-group input[type="range"] {
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    .control-group input[type="color"] {
+      width: 100%;
+      height: 36px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .control-group select {
+      width: 100%;
+      padding: 8px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 13px;
+    }
+
+    .control-group .value {
+      font-size: 11px;
+      color: #666;
+      text-align: right;
+    }
+
+    .color-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #d4af37, #b8956e);
+      color: #1a1814;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+
+    .btn-secondary {
+      background: #333;
+      color: #e0e0e0;
+      border: 1px solid #444;
+    }
+
+    .btn-secondary:hover {
+      background: #3a3a3a;
+    }
+
+    /* Preview Area */
+    .preview-area {
+      flex: 1;
+      margin-left: 360px;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      background: #1a1a1a;
+    }
+
+    .preview-container {
+      position: relative;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      display: flex;
+      gap: 8px;
+    }
+
+    .zoom-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #444;
+      background: #252525;
+      color: #e0e0e0;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .zoom-btn:hover {
+      background: #333;
+    }
+
+    /* The Poster */
+    .poster {
+      background: linear-gradient(165deg, var(--bg-color-start), var(--bg-color-end));
+      padding: var(--poster-padding);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+      transform-origin: top center;
+    }
+
+    .poster-title {
+      font-family: var(--title-font);
+      font-size: var(--title-size);
+      color: var(--title-color);
+      display: inline-flex;
+      gap: 20px;
+      margin-bottom: 40px;
+      font-weight: 400;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .poem-grid {
+      display: grid;
+      grid-template-columns: repeat(29, 1fr);
+      gap: var(--grid-gap);
+      margin-bottom: 40px;
+    }
+
+    .poem-char {
+      font-family: var(--poem-font);
+      font-size: var(--char-size);
+      color: var(--text-primary);
+      width: calc(var(--char-size) + 4px);
+      height: calc(var(--char-size) + 4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    .poster-info {
+      text-align: center;
+      font-family: var(--info-font);
+    }
+
+    .info-chinese {
+      font-size: calc(var(--info-size) + 2px);
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      letter-spacing: 0.1em;
+    }
+
+    .info-english {
+      font-size: var(--info-size);
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    .info-stats {
+      font-size: calc(var(--info-size) - 1px);
+      color: var(--text-muted);
+      opacity: 0.7;
+      letter-spacing: 0.02em;
+    }
+
+    /* Preset buttons */
+    .presets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .preset-btn {
+      padding: 8px;
+      font-size: 11px;
+      border: 1px solid #444;
+      background: #2a2a2a;
+      color: #aaa;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .preset-btn:hover {
+      border-color: #d4af37;
+      color: #d4af37;
+    }
+
+    .preset-btn.active {
+      border-color: #d4af37;
+      background: #3a3a3a;
+      color: #d4af37;
+    }
+
+    /* Highlight Layers */
+    .highlight-section {
+      margin-bottom: 16px;
+    }
+
+    .pattern-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .pattern-btn {
+      padding: 6px 10px;
+      font-size: 11px;
+      border: 1px solid #444;
+      background: #2a2a2a;
+      color: #888;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pattern-btn:hover {
+      border-color: #666;
+      color: #aaa;
+    }
+
+    /* Active Highlight Layers List */
+    .highlight-layers {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .highlight-layer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 6px;
+    }
+
+    .highlight-layer .layer-order {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .highlight-layer .order-btn {
+      width: 20px;
+      height: 16px;
+      border: 1px solid #555;
+      background: #333;
+      color: #888;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .highlight-layer .order-btn:hover {
+      background: #444;
+      color: #ccc;
+    }
+
+    .highlight-layer .layer-name {
+      flex: 1;
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    .highlight-layer .layer-color {
+      width: 32px;
+      height: 24px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .highlight-layer .layer-remove {
+      width: 24px;
+      height: 24px;
+      border: 1px solid #555;
+      background: #333;
+      color: #888;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .highlight-layer .layer-remove:hover {
+      background: #553333;
+      border-color: #884444;
+      color: #cc6666;
+    }
+
+    .no-layers {
+      font-size: 12px;
+      color: #666;
+      font-style: italic;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+  <aside class="controls">
+    <h1>璇璣圖 Poster Designer</h1>
+    <p class="subtitle">Style and export your poster</p>
+
+    <div class="control-section">
+      <h2>Presets</h2>
+      <div class="presets">
+        <button class="preset-btn active" onclick="applyPreset('gold')">Classic Gold</button>
+        <button class="preset-btn" onclick="applyPreset('ink')">Ink & Paper</button>
+        <button class="preset-btn" onclick="applyPreset('night')">Night Sky</button>
+        <button class="preset-btn" onclick="applyPreset('minimal')">Minimal</button>
+        <button class="preset-btn" onclick="applyPreset('vermillion')">Vermillion</button>
+        <button class="preset-btn" onclick="applyPreset('jade')">Jade</button>
+      </div>
+    </div>
+
+    <div class="control-section">
+      <h2>Highlight Patterns</h2>
+      <div class="highlight-section">
+        <div class="pattern-picker">
+          <button class="pattern-btn" onclick="addHighlightLayer('centerSingle')">心</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('center3x3')">3×3</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('corners')">Corners</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('innerCorners')">Inner Cor.</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('diamond')">Diamond</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('innerDiamond')">Inner Dia.</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('cross')">Cross</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('border')">Border</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('innerBorder')">Inner Bor.</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('diagonal')">Diagonals</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('quadrants')">Quadrants</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('sideRects')">Sides</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('topBottom')">Top/Bot</button>
+          <button class="pattern-btn" onclick="addHighlightLayer('leftRight')">Left/Right</button>
+        </div>
+        <div class="highlight-layers" id="highlightLayers">
+          <div class="no-layers">Click patterns above to add highlight layers</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="control-section">
+      <h2>Background</h2>
+      <div class="color-row">
+        <div class="control-group">
+          <label>Start</label>
+          <input type="color" id="bgStart" value="#1a1814" onchange="updateStyle('--bg-color-start', this.value); saveState();">
+        </div>
+        <div class="control-group">
+          <label>End</label>
+          <input type="color" id="bgEnd" value="#252220" onchange="updateStyle('--bg-color-end', this.value); saveState();">
+        </div>
+      </div>
+    </div>
+
+    <div class="control-section">
+      <h2>Colors</h2>
+      <div class="color-row">
+        <div class="control-group">
+          <label>Title</label>
+          <input type="color" id="titleColor" value="#d4af37" onchange="updateStyle('--title-color', this.value); saveState();">
+        </div>
+        <div class="control-group">
+          <label>Poem Text</label>
+          <input type="color" id="textPrimary" value="#e8d48b" onchange="updateStyle('--text-primary', this.value); saveState();">
+        </div>
+      </div>
+      <div class="color-row">
+        <div class="control-group">
+          <label>Info Text</label>
+          <input type="color" id="textSecondary" value="#b8956e" onchange="updateStyle('--text-secondary', this.value); saveState();">
+        </div>
+        <div class="control-group">
+          <label>Muted Text</label>
+          <input type="color" id="textMuted" value="#8a7355" onchange="updateStyle('--text-muted', this.value); saveState();">
+        </div>
+      </div>
+    </div>
+
+    <div class="control-section">
+      <h2>Typography</h2>
+      <div class="control-group">
+        <label>Title Font</label>
+        <select id="titleFont" onchange="updateFont('title', this.value); saveState();">
+          <option value="Noto Serif SC">Noto Serif SC (宋体)</option>
+          <option value="ZCOOL XiaoWei">ZCOOL XiaoWei (小薇)</option>
+          <option value="Ma Shan Zheng">Ma Shan Zheng (马山正)</option>
+          <option value="Liu Jian Mao Cao">Liu Jian Mao Cao (刘建毛草)</option>
+          <option value="Long Cang">Long Cang (龙藏)</option>
+          <option value="ZCOOL QingKe HuangYou">ZCOOL QingKe HuangYou (青壳黄油)</option>
+          <option value="Zhi Mang Xing">Zhi Mang Xing (知忙行)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Poem Font</label>
+        <select id="poemFont" onchange="updateFont('poem', this.value); saveState();">
+          <option value="Noto Serif SC">Noto Serif SC (宋体)</option>
+          <option value="ZCOOL XiaoWei">ZCOOL XiaoWei (小薇)</option>
+          <option value="Ma Shan Zheng">Ma Shan Zheng (马山正)</option>
+          <option value="Liu Jian Mao Cao">Liu Jian Mao Cao (刘建毛草)</option>
+          <option value="Long Cang">Long Cang (龙藏)</option>
+          <option value="ZCOOL QingKe HuangYou">ZCOOL QingKe HuangYou (青壳黄油)</option>
+          <option value="Zhi Mang Xing">Zhi Mang Xing (知忙行)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Character Size: <span id="charSizeValue">18px</span></label>
+        <input type="range" id="charSize" min="12" max="28" value="18" onchange="updateCharSize(this.value)">
+      </div>
+      <div class="control-group">
+        <label>Title Size: <span id="titleSizeValue">42px</span></label>
+        <input type="range" id="titleSize" min="28" max="72" value="42" onchange="updateTitleSize(this.value)">
+      </div>
+      <div class="control-group">
+        <label>Grid Gap: <span id="gridGapValue">2px</span></label>
+        <input type="range" id="gridGap" min="0" max="8" value="2" onchange="updateGridGap(this.value)">
+      </div>
+      <div class="control-group">
+        <label>Padding: <span id="paddingValue">60px</span></label>
+        <input type="range" id="padding" min="30" max="120" value="60" onchange="updatePadding(this.value)">
+      </div>
+    </div>
+
+    <div class="control-section">
+      <h2>Export</h2>
+      <button class="btn btn-primary" onclick="exportSVG()">Download SVG</button>
+      <button class="btn btn-secondary" onclick="exportPNG()">Download PNG</button>
+    </div>
+
+    <div class="control-section">
+      <button class="btn btn-secondary" onclick="resetState()">Reset All Settings</button>
+    </div>
+  </aside>
+
+  <main class="preview-area">
+    <div class="preview-container">
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoom(-0.1)">−</button>
+        <button class="zoom-btn" onclick="zoom(0.1)">+</button>
+        <button class="zoom-btn" onclick="resetZoom()">⟲</button>
+      </div>
+      <div class="poster" id="poster">
+        <h1 class="poster-title"><span>璇</span><span>璣</span><span>圖</span></h1>
+        <div class="poem-grid" id="poemGrid"></div>
+        <div class="poster-info">
+          <div class="info-chinese">蘇蕙 · 蘇若蘭 · 前秦 · 四世紀</div>
+          <div class="info-english">Su Hui (Su Ruolan) · Former Qin Dynasty · 4th Century CE</div>
+          <div class="info-stats">841 characters · ~7,958 poems · Read in any direction</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // The poem grid (29x29 = 841 characters)
+    const poem = `琴清流楚激弦商秦曲發聲悲摧藏音和詠思惟空堂心憂增慕懷慘傷仁
+芳廊東步階西遊王姿淑窕窈伯邵南周風興自后妃荒經離所懷歎嗟智
+蘭休桃林陰翳桑懷歸思廣河女衛鄭楚樊厲節中闈淫遐曠路傷中情懷
+凋翔飛燕巢雙鳩土迤逶路遐志詠歌長歎不能奮飛妄清幃房君無家德
+茂流泉情水激揚眷頎其人碩興齊商雙發歌我袞衣想華飾容朗鏡明聖
+熙長君思悲好仇舊蕤葳粲翠榮曜流華觀冶容為誰感英曜珠光紛葩虞
+陽愁歎發容摧傷鄉悲情我感傷情徵宮羽同聲相追所多思感誰為榮唐
+春方殊離仁君榮身苦惟艱生患多殷憂纏情將如何欽蒼穹誓終篤志貞
+牆禽心濱均深身加懷憂是嬰藻文繁虎龍寧自感思岑形熒城榮明庭妙
+面伯改漢物日我兼思何漫漫榮曜華雕旂孜孜傷情幽未猶傾苟難闈顯
+殊在者之品潤乎愁苦艱是丁麗壯觀飾容側君在時巖在炎在不受亂華
+意誠惑步育浸集悴我生何冤充顏曜繡衣夢想勞形峻慎盛戒義消作重
+感故昵飄施愆殃少章時桑詩端無終始詩仁顏貞寒嵯深興后姬源人榮
+故遺親飄生思愆精徽盛翳風比平始璇情賢喪物歲峨慮漸孽班禍讒章
+新舊聞離天罪辜神恨昭感興作蘇心璣明別改知識深微至嬖女因奸臣
+霜廢遠微地積何遐微業孟鹿麗氏詩圖顯行華終凋淵察大趙婕所佞賢
+冰故離隔德怨因幽元傾宣鳴辭理興義怨士容始松重遠伐氏妤恃凶惟
+齊君殊喬貴其備曠悼思傷懷日往感年衰念是舊愆涯禍用飛辭恣害聖
+潔子我木平根嘗遠歎永感悲思憂遠勞情誰為獨居經在昭燕輦極我配
+志惟同誰均難苦離戚戚情哀慕歲殊歎時賤女懷歎網防青實漢驕忠英
+清新衾陰勻尋辛鳳知我者誰世異浮奇傾鄙賤何如羅萌青生成盈貞皇
+純貞志一專所當麟沙流頹逝異浮沉華英翳曜潛陽林西昭景薄榆桑倫
+望微精感通明神龍馳若然倏逝惟時年殊白日西移光滋愚讒漫頑凶匹
+誰雲浮寄身輕飛昭虧不盈無倏必盛有衰無日不陂流蒙謙退休孝慈離
+思輝光飭粲殊文德離忠體一違心意志殊憤激何施電疑危遠家和雍飄
+想群離散妾孤遺懷儀容仰俯榮華麗飾身將與誰為逝容節敦貞淑思浮
+懷悲哀聲殊乖分聖貲何情憂感惟哀志節上通神祗推持所貞記自恭江
+所春傷應翔雁歸皇辭成者作體下遺葑菲採者無差生從是敬孝為基湘
+親剛柔有女為賤人房幽處己憫微身長路悲曠感生民梁山殊塞隔河津`.replace(/\n/g, '');
+
+    let currentZoom = 1;
+
+    // Highlight layers: array of { pattern: string, color: string }
+    // Order matters - first in list has highest priority
+    let highlightLayers = [];
+
+    // Pattern display names
+    const patternNames = {
+      centerSingle: 'Center 心',
+      center3x3: 'Center 3×3',
+      corners: 'Corners 7×7',
+      innerCorners: 'Inner Corners',
+      diamond: 'Diamond Ring',
+      innerDiamond: 'Inner Diamond',
+      cross: 'Cross',
+      border: 'Border',
+      innerBorder: 'Inner Border',
+      diagonal: 'Diagonals',
+      quadrants: 'Quadrants',
+      sideRects: 'Side Rectangles',
+      topBottom: 'Top/Bottom',
+      leftRight: 'Left/Right'
+    };
+
+    // Default colors for each pattern
+    const defaultPatternColors = {
+      centerSingle: '#ff6b6b',
+      center3x3: '#ff8a80',
+      corners: '#4ecdc4',
+      innerCorners: '#26a69a',
+      diamond: '#ffe66d',
+      innerDiamond: '#ffd54f',
+      cross: '#95e1d3',
+      border: '#dda0dd',
+      innerBorder: '#ce93d8',
+      diagonal: '#98d8c8',
+      quadrants: '#f7dc6f',
+      sideRects: '#81d4fa',
+      topBottom: '#a5d6a7',
+      leftRight: '#ffcc80'
+    };
+
+    // Highlight pattern definitions
+    const highlightPatterns = {
+      // Single center character (心)
+      centerSingle: (row, col) => {
+        return row === 14 && col === 14;
+      },
+
+      // Center 3x3 block
+      center3x3: (row, col) => {
+        const centerRow = 14, centerCol = 14;
+        return Math.abs(row - centerRow) <= 1 && Math.abs(col - centerCol) <= 1;
+      },
+
+      // Four corner 7x7 blocks
+      corners: (row, col) => {
+        const size = 7;
+        return (row < size && col < size) ||
+               (row < size && col >= 29 - size) ||
+               (row >= 29 - size && col < size) ||
+               (row >= 29 - size && col >= 29 - size);
+      },
+
+      // Inner corner 5x5 blocks (inside the main corners)
+      innerCorners: (row, col) => {
+        const inBlock = (r, c, startR, startC, size) =>
+          r >= startR && r < startR + size && c >= startC && c < startC + size;
+        return inBlock(row, col, 1, 1, 5) ||
+               inBlock(row, col, 1, 23, 5) ||
+               inBlock(row, col, 23, 1, 5) ||
+               inBlock(row, col, 23, 23, 5);
+      },
+
+      // Diamond ring around center
+      diamond: (row, col) => {
+        const center = 14;
+        const dist = Math.abs(row - center) + Math.abs(col - center);
+        return dist <= 7 && dist >= 5;
+      },
+
+      // Inner diamond (smaller)
+      innerDiamond: (row, col) => {
+        const center = 14;
+        const dist = Math.abs(row - center) + Math.abs(col - center);
+        return dist <= 4 && dist >= 2;
+      },
+
+      // Cross pattern through center
+      cross: (row, col) => {
+        return row === 14 || col === 14;
+      },
+
+      // Outer border
+      border: (row, col) => {
+        return row === 0 || row === 28 || col === 0 || col === 28;
+      },
+
+      // Inner border (second ring)
+      innerBorder: (row, col) => {
+        return (row === 1 || row === 27) && col >= 1 && col <= 27 ||
+               (col === 1 || col === 27) && row >= 1 && row <= 27;
+      },
+
+      // Both diagonals
+      diagonal: (row, col) => {
+        return row === col || row === 28 - col;
+      },
+
+      // Four quadrant blocks
+      quadrants: (row, col) => {
+        const inBlock = (r, c, startR, startC, size) =>
+          r >= startR && r < startR + size && c >= startC && c < startC + size;
+        return inBlock(row, col, 4, 4, 5) ||
+               inBlock(row, col, 4, 20, 5) ||
+               inBlock(row, col, 20, 4, 5) ||
+               inBlock(row, col, 20, 20, 5);
+      },
+
+      // Side rectangles (between corners)
+      sideRects: (row, col) => {
+        // Top strip between corners
+        const topStrip = row >= 0 && row < 7 && col >= 7 && col < 22;
+        // Bottom strip between corners
+        const bottomStrip = row >= 22 && row < 29 && col >= 7 && col < 22;
+        // Left strip between corners
+        const leftStrip = col >= 0 && col < 7 && row >= 7 && row < 22;
+        // Right strip between corners
+        const rightStrip = col >= 22 && col < 29 && row >= 7 && row < 22;
+        return topStrip || bottomStrip || leftStrip || rightStrip;
+      },
+
+      // Top and bottom strips only
+      topBottom: (row, col) => {
+        return (row >= 0 && row < 7 && col >= 7 && col < 22) ||
+               (row >= 22 && row < 29 && col >= 7 && col < 22);
+      },
+
+      // Left and right strips only
+      leftRight: (row, col) => {
+        return (col >= 0 && col < 7 && row >= 7 && row < 22) ||
+               (col >= 22 && col < 29 && row >= 7 && row < 22);
+      }
+    };
+
+    // Initialize the grid
+    function initGrid() {
+      const grid = document.getElementById('poemGrid');
+      grid.innerHTML = '';
+
+      for (let i = 0; i < poem.length; i++) {
+        const span = document.createElement('span');
+        span.className = 'poem-char';
+        span.textContent = poem[i];
+        span.dataset.row = Math.floor(i / 29);
+        span.dataset.col = i % 29;
+        grid.appendChild(span);
+      }
+    }
+
+    // Add a highlight layer
+    function addHighlightLayer(pattern) {
+      // Check if pattern already exists
+      if (highlightLayers.some(l => l.pattern === pattern)) {
+        return; // Don't add duplicates
+      }
+
+      highlightLayers.push({
+        pattern: pattern,
+        color: defaultPatternColors[pattern]
+      });
+
+      renderHighlightLayers();
+      applyHighlights();
+      saveState();
+    }
+
+    // Remove a highlight layer
+    function removeHighlightLayer(index) {
+      highlightLayers.splice(index, 1);
+      renderHighlightLayers();
+      applyHighlights();
+      saveState();
+    }
+
+    // Move layer up (higher priority)
+    function moveLayerUp(index) {
+      if (index > 0) {
+        [highlightLayers[index], highlightLayers[index - 1]] =
+          [highlightLayers[index - 1], highlightLayers[index]];
+        renderHighlightLayers();
+        applyHighlights();
+        saveState();
+      }
+    }
+
+    // Move layer down (lower priority)
+    function moveLayerDown(index) {
+      if (index < highlightLayers.length - 1) {
+        [highlightLayers[index], highlightLayers[index + 1]] =
+          [highlightLayers[index + 1], highlightLayers[index]];
+        renderHighlightLayers();
+        applyHighlights();
+        saveState();
+      }
+    }
+
+    // Update layer color
+    function updateLayerColor(index, color) {
+      highlightLayers[index].color = color;
+      applyHighlights();
+      saveState();
+    }
+
+    // Render the highlight layers UI
+    function renderHighlightLayers() {
+      const container = document.getElementById('highlightLayers');
+
+      if (highlightLayers.length === 0) {
+        container.innerHTML = '<div class="no-layers">Click patterns above to add highlight layers</div>';
+        return;
+      }
+
+      container.innerHTML = highlightLayers.map((layer, index) => `
+        <div class="highlight-layer">
+          <div class="layer-order">
+            <button class="order-btn" onclick="moveLayerUp(${index})" ${index === 0 ? 'disabled' : ''}>▲</button>
+            <button class="order-btn" onclick="moveLayerDown(${index})" ${index === highlightLayers.length - 1 ? 'disabled' : ''}>▼</button>
+          </div>
+          <span class="layer-name">${patternNames[layer.pattern]}</span>
+          <input type="color" class="layer-color" value="${layer.color}" onchange="updateLayerColor(${index}, this.value)">
+          <button class="layer-remove" onclick="removeHighlightLayer(${index})">×</button>
+        </div>
+      `).join('');
+    }
+
+    // Apply highlights to the grid
+    function applyHighlights() {
+      const chars = document.querySelectorAll('.poem-char');
+
+      chars.forEach(char => {
+        const row = parseInt(char.dataset.row);
+        const col = parseInt(char.dataset.col);
+
+        // Find the first (highest priority) layer that matches this position
+        let highlightColor = null;
+        for (const layer of highlightLayers) {
+          if (highlightPatterns[layer.pattern](row, col)) {
+            highlightColor = layer.color;
+            break;
+          }
+        }
+
+        // Apply color - either highlight color or default text color
+        if (highlightColor) {
+          char.style.color = highlightColor;
+        } else {
+          char.style.color = ''; // Reset to CSS variable
+        }
+      });
+    }
+
+    // Update CSS custom properties
+    function updateStyle(property, value) {
+      document.documentElement.style.setProperty(property, value);
+    }
+
+    function updateFont(type, value) {
+      const fontValue = `"${value}", serif`;
+      if (type === 'title') {
+        updateStyle('--title-font', fontValue);
+      } else {
+        updateStyle('--poem-font', fontValue);
+      }
+    }
+
+    function updateCharSize(value) {
+      document.getElementById('charSizeValue').textContent = value + 'px';
+      updateStyle('--char-size', value + 'px');
+      saveState();
+    }
+
+    function updateTitleSize(value) {
+      document.getElementById('titleSizeValue').textContent = value + 'px';
+      updateStyle('--title-size', value + 'px');
+      saveState();
+    }
+
+    function updateGridGap(value) {
+      document.getElementById('gridGapValue').textContent = value + 'px';
+      updateStyle('--grid-gap', value + 'px');
+      saveState();
+    }
+
+    function updatePadding(value) {
+      document.getElementById('paddingValue').textContent = value + 'px';
+      updateStyle('--poster-padding', value + 'px');
+      saveState();
+    }
+
+    // Zoom controls
+    function zoom(delta) {
+      currentZoom = Math.max(0.3, Math.min(2, currentZoom + delta));
+      document.getElementById('poster').style.transform = `scale(${currentZoom})`;
+    }
+
+    function resetZoom() {
+      currentZoom = 1;
+      document.getElementById('poster').style.transform = 'scale(1)';
+    }
+
+    // Presets
+    const presets = {
+      gold: {
+        bgStart: '#1a1814',
+        bgEnd: '#252220',
+        titleColor: '#d4af37',
+        textPrimary: '#e8d48b',
+        textSecondary: '#b8956e',
+        textMuted: '#8a7355'
+      },
+      ink: {
+        bgStart: '#f5f2eb',
+        bgEnd: '#ebe6db',
+        titleColor: '#1a1a1a',
+        textPrimary: '#2c2c2c',
+        textSecondary: '#4a4a4a',
+        textMuted: '#6a6a6a'
+      },
+      night: {
+        bgStart: '#0d1117',
+        bgEnd: '#161b22',
+        titleColor: '#e6edf3',
+        textPrimary: '#c9d1d9',
+        textSecondary: '#8b949e',
+        textMuted: '#6e7681'
+      },
+      minimal: {
+        bgStart: '#ffffff',
+        bgEnd: '#fafafa',
+        titleColor: '#000000',
+        textPrimary: '#1a1a1a',
+        textSecondary: '#4a4a4a',
+        textMuted: '#8a8a8a'
+      },
+      vermillion: {
+        bgStart: '#1a1410',
+        bgEnd: '#241a14',
+        titleColor: '#c73e1d',
+        textPrimary: '#e07a5f',
+        textSecondary: '#a05a4a',
+        textMuted: '#6d4c41'
+      },
+      jade: {
+        bgStart: '#0f1a18',
+        bgEnd: '#142220',
+        titleColor: '#4a9e8c',
+        textPrimary: '#7ec8b8',
+        textSecondary: '#5a9a8a',
+        textMuted: '#3d6b60'
+      }
+    };
+
+    function applyPreset(name) {
+      const preset = presets[name];
+
+      // Update button states
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase().replace(/[& ]/g, '') === name.toLowerCase()) {
+          btn.classList.add('active');
+        }
+      });
+
+      // Update color inputs
+      document.getElementById('bgStart').value = preset.bgStart;
+      document.getElementById('bgEnd').value = preset.bgEnd;
+      document.getElementById('titleColor').value = preset.titleColor;
+      document.getElementById('textPrimary').value = preset.textPrimary;
+      document.getElementById('textSecondary').value = preset.textSecondary;
+      document.getElementById('textMuted').value = preset.textMuted;
+
+      // Apply styles
+      updateStyle('--bg-color-start', preset.bgStart);
+      updateStyle('--bg-color-end', preset.bgEnd);
+      updateStyle('--title-color', preset.titleColor);
+      updateStyle('--text-primary', preset.textPrimary);
+      updateStyle('--text-secondary', preset.textSecondary);
+      updateStyle('--text-muted', preset.textMuted);
+
+      // Re-apply highlights (in case text color changed)
+      applyHighlights();
+      saveState();
+    }
+
+    // LocalStorage persistence
+    const STORAGE_KEY = 'xuanji-poster-state';
+
+    function saveState() {
+      const state = {
+        colors: {
+          bgStart: document.getElementById('bgStart').value,
+          bgEnd: document.getElementById('bgEnd').value,
+          titleColor: document.getElementById('titleColor').value,
+          textPrimary: document.getElementById('textPrimary').value,
+          textSecondary: document.getElementById('textSecondary').value,
+          textMuted: document.getElementById('textMuted').value
+        },
+        fonts: {
+          title: document.getElementById('titleFont').value,
+          poem: document.getElementById('poemFont').value
+        },
+        sizes: {
+          charSize: document.getElementById('charSize').value,
+          titleSize: document.getElementById('titleSize').value,
+          gridGap: document.getElementById('gridGap').value,
+          padding: document.getElementById('padding').value
+        },
+        highlightLayers: highlightLayers
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return false;
+
+      try {
+        const state = JSON.parse(saved);
+
+        // Restore colors
+        if (state.colors) {
+          document.getElementById('bgStart').value = state.colors.bgStart;
+          document.getElementById('bgEnd').value = state.colors.bgEnd;
+          document.getElementById('titleColor').value = state.colors.titleColor;
+          document.getElementById('textPrimary').value = state.colors.textPrimary;
+          document.getElementById('textSecondary').value = state.colors.textSecondary;
+          document.getElementById('textMuted').value = state.colors.textMuted;
+
+          updateStyle('--bg-color-start', state.colors.bgStart);
+          updateStyle('--bg-color-end', state.colors.bgEnd);
+          updateStyle('--title-color', state.colors.titleColor);
+          updateStyle('--text-primary', state.colors.textPrimary);
+          updateStyle('--text-secondary', state.colors.textSecondary);
+          updateStyle('--text-muted', state.colors.textMuted);
+        }
+
+        // Restore fonts
+        if (state.fonts) {
+          document.getElementById('titleFont').value = state.fonts.title;
+          document.getElementById('poemFont').value = state.fonts.poem;
+          updateFont('title', state.fonts.title);
+          updateFont('poem', state.fonts.poem);
+        }
+
+        // Restore sizes
+        if (state.sizes) {
+          document.getElementById('charSize').value = state.sizes.charSize;
+          document.getElementById('titleSize').value = state.sizes.titleSize;
+          document.getElementById('gridGap').value = state.sizes.gridGap;
+          document.getElementById('padding').value = state.sizes.padding;
+
+          document.getElementById('charSizeValue').textContent = state.sizes.charSize + 'px';
+          document.getElementById('titleSizeValue').textContent = state.sizes.titleSize + 'px';
+          document.getElementById('gridGapValue').textContent = state.sizes.gridGap + 'px';
+          document.getElementById('paddingValue').textContent = state.sizes.padding + 'px';
+
+          updateStyle('--char-size', state.sizes.charSize + 'px');
+          updateStyle('--title-size', state.sizes.titleSize + 'px');
+          updateStyle('--grid-gap', state.sizes.gridGap + 'px');
+          updateStyle('--poster-padding', state.sizes.padding + 'px');
+        }
+
+        // Restore highlight layers
+        if (state.highlightLayers) {
+          highlightLayers = state.highlightLayers;
+          renderHighlightLayers();
+          applyHighlights();
+        }
+
+        return true;
+      } catch (e) {
+        console.error('Failed to load state:', e);
+        return false;
+      }
+    }
+
+    function resetState() {
+      if (confirm('Reset all settings to defaults?')) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+
+    // Get highlight color for a character position (for export)
+    function getCharHighlightColor(row, col) {
+      for (const layer of highlightLayers) {
+        if (highlightPatterns[layer.pattern](row, col)) {
+          return layer.color;
+        }
+      }
+      return null;
+    }
+
+    // Export to SVG
+    function exportSVG() {
+      const styles = getComputedStyle(document.documentElement);
+
+      const bgStart = styles.getPropertyValue('--bg-color-start').trim();
+      const bgEnd = styles.getPropertyValue('--bg-color-end').trim();
+      const titleColor = styles.getPropertyValue('--title-color').trim();
+      const textPrimary = styles.getPropertyValue('--text-primary').trim();
+      const textSecondary = styles.getPropertyValue('--text-secondary').trim();
+      const textMuted = styles.getPropertyValue('--text-muted').trim();
+      const charSize = parseInt(styles.getPropertyValue('--char-size'));
+      const titleSize = parseInt(styles.getPropertyValue('--title-size'));
+      const gridGap = parseInt(styles.getPropertyValue('--grid-gap'));
+      const padding = parseInt(styles.getPropertyValue('--poster-padding'));
+      const infoSize = parseInt(styles.getPropertyValue('--info-size')) || 11;
+      const titleFont = styles.getPropertyValue('--title-font').trim();
+      const poemFont = styles.getPropertyValue('--poem-font').trim();
+
+      const cellSize = charSize + 4 + gridGap;
+      const gridSize = cellSize * 29 - gridGap;
+      const width = gridSize + padding * 2;
+      const titleY = padding + titleSize;
+      const gridY = titleY + 40;
+      const infoY = gridY + gridSize + 40;
+      const height = infoY + 60 + padding;
+
+      // Collect all unique highlight colors for style definitions
+      const usedColors = new Set();
+      highlightLayers.forEach(l => usedColors.add(l.color));
+
+      let colorStyles = '';
+      usedColors.forEach(color => {
+        const safeClass = 'char-' + color.replace('#', '');
+        colorStyles += `\n      .${safeClass} { font-family: ${poemFont}; font-size: ${charSize}px; fill: ${color}; }`;
+      });
+
+      let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:${bgStart}"/>
+      <stop offset="100%" style="stop-color:${bgEnd}"/>
+    </linearGradient>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Liu+Jian+Mao+Cao&amp;family=Long+Cang&amp;family=Ma+Shan+Zheng&amp;family=Noto+Sans+SC:wght@300;400;500&amp;family=Noto+Serif+SC:wght@400;500;600&amp;family=ZCOOL+QingKe+HuangYou&amp;family=ZCOOL+XiaoWei&amp;family=Zhi+Mang+Xing&amp;display=swap');
+      .title { font-family: ${titleFont}; font-size: ${titleSize}px; fill: ${titleColor}; }
+      .char { font-family: ${poemFont}; font-size: ${charSize}px; fill: ${textPrimary}; }${colorStyles}
+      .info-zh { font-family: 'Noto Sans SC', sans-serif; font-size: ${infoSize + 2}px; fill: ${textSecondary}; }
+      .info-en { font-family: 'Noto Sans SC', sans-serif; font-size: ${infoSize}px; fill: ${textMuted}; }
+      .info-stats { font-family: 'Noto Sans SC', sans-serif; font-size: ${infoSize - 1}px; fill: ${textMuted}; opacity: 0.7; }
+    </style>
+  </defs>
+
+  <rect width="100%" height="100%" fill="url(#bgGradient)"/>
+
+  <text x="${width/2}" y="${titleY}" text-anchor="middle" class="title"><tspan>璇</tspan><tspan dx="20">璣</tspan><tspan dx="20">圖</tspan></text>
+
+  <g transform="translate(${padding}, ${gridY})">`;
+
+      // Add poem characters
+      for (let row = 0; row < 29; row++) {
+        for (let col = 0; col < 29; col++) {
+          const char = poem[row * 29 + col];
+          const x = col * cellSize + cellSize / 2;
+          const y = row * cellSize + charSize;
+          const highlightColor = getCharHighlightColor(row, col);
+          let charClass = 'char';
+          if (highlightColor) {
+            charClass = 'char-' + highlightColor.replace('#', '');
+          }
+          svg += `\n    <text x="${x}" y="${y}" text-anchor="middle" class="${charClass}">${char}</text>`;
+        }
+      }
+
+      svg += `
+  </g>
+
+  <text x="${width/2}" y="${infoY}" text-anchor="middle" class="info-zh">蘇蕙 · 蘇若蘭 · 前秦 · 四世紀</text>
+  <text x="${width/2}" y="${infoY + 20}" text-anchor="middle" class="info-en">Su Hui (Su Ruolan) · Former Qin Dynasty · 4th Century CE</text>
+  <text x="${width/2}" y="${infoY + 38}" text-anchor="middle" class="info-stats">841 characters · ~7,958 poems · Read in any direction</text>
+</svg>`;
+
+      downloadFile(svg, 'xuanji-tu-poster.svg', 'image/svg+xml');
+    }
+
+    // Export to PNG
+    function exportPNG() {
+      const poster = document.getElementById('poster');
+      const scale = 3; // High resolution
+
+      const styles = getComputedStyle(document.documentElement);
+      const rect = poster.getBoundingClientRect();
+
+      // Create a canvas
+      const canvas = document.createElement('canvas');
+      const width = rect.width * scale;
+      const height = rect.height * scale;
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+
+      // Create an SVG with foreignObject containing the poster HTML
+      const data = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}">
+          <foreignObject width="100%" height="100%">
+            <div xmlns="http://www.w3.org/1999/xhtml">
+              ${poster.outerHTML}
+              <style>
+                ${document.querySelector('style').innerHTML}
+                :root {
+                  --bg-color-start: ${styles.getPropertyValue('--bg-color-start')};
+                  --bg-color-end: ${styles.getPropertyValue('--bg-color-end')};
+                  --title-color: ${styles.getPropertyValue('--title-color')};
+                  --text-primary: ${styles.getPropertyValue('--text-primary')};
+                  --text-secondary: ${styles.getPropertyValue('--text-secondary')};
+                  --text-muted: ${styles.getPropertyValue('--text-muted')};
+                  --char-size: ${styles.getPropertyValue('--char-size')};
+                  --title-size: ${styles.getPropertyValue('--title-size')};
+                  --title-font: ${styles.getPropertyValue('--title-font')};
+                  --poem-font: ${styles.getPropertyValue('--poem-font')};
+                  --grid-gap: ${styles.getPropertyValue('--grid-gap')};
+                  --poster-padding: ${styles.getPropertyValue('--poster-padding')};
+                }
+                .poster { transform: none !important; }
+              </style>
+            </div>
+          </foreignObject>
+        </svg>`;
+
+      const img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(function(blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'xuanji-tu-poster.png';
+          a.click();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(data);
+    }
+
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Initialize
+    initGrid();
+    loadState();
+  </script>
+</body>
+</html>
